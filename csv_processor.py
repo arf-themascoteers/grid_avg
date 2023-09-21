@@ -69,7 +69,7 @@ class CSVProcessor:
             if scene_fusion:
                 the_scene = row["scene"]
 
-            neighbours = row
+            neighbours = pd.DataFrame(columns=columns, data=[row])
 
             for ro in row_offset:
                 for co in col_offset:
