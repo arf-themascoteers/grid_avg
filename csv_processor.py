@@ -1,13 +1,9 @@
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
+from s2_bands import S2Bands
 
 
 class CSVProcessor:
-    @staticmethod
-    def get_neighbour_columns():
-        return ["nB01", "nB02", "nB03", "nB04", "nB05", "nB06", "nB07", "nB08", "nB8A", "nB09", "nB11", "nB12"]
-
-
     @staticmethod
     def aggregate(complete, ag):
         df = pd.read_csv(complete)
@@ -61,8 +57,6 @@ class CSVProcessor:
     def gridify(cls, ag, grid, scene_fusion = False):
         df = pd.read_csv(ag)
         columns = list(df.columns)
-        columns = columns + CSVProcessor.get_neighbour_columns()
-
         dest = pd.DataFrame(columns=columns)
 
         row_offset = [-1,0,1]
@@ -75,7 +69,7 @@ class CSVProcessor:
             if scene_fusion:
                 the_scene = row["scene"]
 
-            neighbours = None
+            neighbours = row
 
             for ro in row_offset:
                 for co in col_offset:
@@ -90,21 +84,14 @@ class CSVProcessor:
                     if len(filter) == 0:
                         continue
 
-                    if neighbours is None:
-                        neighbours = filter
-                    else:
-                        neighbours = pd.concat((neighbours,filter), axis=0)
-
-            if neighbours is None:
-                continue
+                    neighbours = pd.concat((neighbours,filter), axis=0)
 
             new_row = {}
             for column in df.columns:
                 new_row[column] = row[column]
 
-            for ncol in CSVProcessor.get_neighbour_columns():
-                band = ncol[1:]
-                new_row[ncol] = neighbours[band].mean()
+            for band in S2Bands.get_all_bands():
+                new_row[band] = neighbours[band].mean()
 
             df_dictionary = pd.DataFrame([new_row])
             dest = pd.concat([dest, df_dictionary], ignore_index=True)
